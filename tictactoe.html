@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Tic-Tac-Toe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --primary-color: #e94560;
+            --secondary-color: #0f3460;
+            --cell-bg: #16213e;
+            --glow-color-x: rgba(233, 69, 96, 0.7);
+            --glow-color-o: rgba(25, 211, 253, 0.7);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        
+        .game-card {
+            background-color: var(--secondary-color);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 10px var(--primary-color);
+        }
+        
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
+            background: var(--cell-bg);
+            padding: 0.75rem;
+            border-radius: 10px;
+        }
+        .score {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .score span {
+            display: block;
+            font-size: 1.5rem;
+        }
+        #score-x { color: var(--primary-color); }
+        #score-o { color: #19d3fd; }
+        #score-draw { color: #f0f0f0; }
+
+        .game-modes {
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .mode-btn {
+            background-color: transparent;
+            border: 2px solid var(--cell-bg);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px var(--glow-color-x);
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .cell {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background-color: var(--cell-bg);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .cell:not(.x):not(.o):hover {
+            background-color: #1f4068;
+            border-color: var(--primary-color);
+        }
+        
+        .cell.x, .cell.o {
+            cursor: not-allowed;
+        }
+        
+        .cell.x { color: var(--primary-color); text-shadow: 0 0 20px var(--glow-color-x); }
+        .cell.o { color: #19d3fd; text-shadow: 0 0 20px var(--glow-color-o); }
+
+        .cell.win { animation: win-pulse 0.8s infinite; }
+
+        @keyframes win-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        #status {
+            font-size: 1.5rem;
+            font-weight: 600;
+            min-height: 2.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .status-x { color: var(--primary-color); }
+        .status-o { color: #19d3fd; }
+        .status-draw { color: #f0f0f0; }
+
+        #restart-btn {
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--glow-color-x);
+            margin-top: 1rem;
+        }
+
+        #restart-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--glow-color-x); }
+        #restart-btn:active { transform: translateY(0); }
+
+        @media (max-width: 480px) {
+            .game-card { padding: 1.5rem; }
+            h1 { font-size: 2rem; }
+            .cell { font-size: 2.5rem; gap: 0.5rem; }
+            #status { font-size: 1.25rem; }
+            .scoreboard { flex-direction: column; gap: 0.5rem; align-items: center;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="game-card">
+            <h1>Tic-Tac-Toe</h1>
+
+            <div class="scoreboard">
+                <div class="score" id="score-x">Player X <span id="x-score">0</span></div>
+                <div class="score" id="score-draw">Draws <span id="draw-score">0</span></div>
+                <div class="score" id="score-o">Player O <span id="o-score">0</span></div>
+            </div>
+
+            <div class="game-modes">
+                <button class="mode-btn active" id="mode-pvp">2 Players</button>
+                <button class="mode-btn" id="mode-pva">vs Computer</button>
+            </div>
+            
+            <div id="status" class="status-x">Player X's turn</div>
+
+            <div id="game-board">
+                <div class="cell" data-cell-index="0"></div>
+                <div class="cell" data-cell-index="1"></div>
+                <div class="cell" data-cell-index="2"></div>
+                <div class="cell" data-cell-index="3"></div>
+                <div class="cell" data-cell-index="4"></div>
+                <div class="cell" data-cell-index="5"></div>
+                <div class="cell" data-cell-index="6"></div>
+                <div class="cell" data-cell-index="7"></div>
+                <div class="cell" data-cell-index="8"></div>
+            </div>
+
+            <button id="restart-btn">New Round</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusDisplay = document.getElementById('status');
+            const gameBoard = document.getElementById('game-board');
+            const cells = document.querySelectorAll('.cell');
+            const restartBtn = document.getElementById('restart-btn');
+            const pvpModeBtn = document.getElementById('mode-pvp');
+            const pvaModeBtn = document.getElementById('mode-pva');
+            const xScoreDisplay = document.getElementById('x-score');
+            const oScoreDisplay = document.getElementById('o-score');
+            const drawScoreDisplay = document.getElementById('draw-score');
+
+            let gameActive = true;
+            let currentPlayer = 'X';
+            let gameState = ["", "", "", "", "", "", "", "", ""];
+            let gameMode = 'pvp';
+            let scores = { x: 0, o: 0, draw: 0 };
+
+            const winningConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            
+            const winningMessage = () => `Player ${currentPlayer} has won!`;
+            const drawMessage = () => `Game ended in a draw!`;
+            const currentPlayerTurn = () => `Player ${currentPlayer}'s turn`;
+
+            function startNewRound() {
+                gameActive = true;
+                currentPlayer = 'X';
+                gameState = ["", "", "", "", "", "", "", "", ""];
+                statusDisplay.innerHTML = currentPlayerTurn();
+                statusDisplay.className = 'status-x';
+                cells.forEach(cell => {
+                    cell.innerHTML = "";
+                    cell.className = 'cell';
+                });
+            }
+
+            function setGameMode(mode) {
+                gameMode = mode;
+                if (mode === 'pvp') {
+                    pvpModeBtn.classList.add('active');
+                    pvaModeBtn.classList.remove('active');
+                } else {
+                    pvaModeBtn.classList.add('active');
+                    pvpModeBtn.classList.remove('active');
+                }
+                scores = { x: 0, o: 0, draw: 0 };
+                updateScoreboard();
+                startNewRound();
+            }
+
+            function handleCellClick(clickedCellEvent) {
+                const clickedCell = clickedCellEvent.target;
+                const clickedCellIndex = parseInt(clickedCell.getAttribute('data-cell-index'));
+
+                if (gameState[clickedCellIndex] !== "" || !gameActive) {
+                    return;
+                }
+
+                handleCellPlayed(clickedCell, clickedCellIndex);
+                handleResultValidation();
+
+                if (gameActive && gameMode === 'pva' && currentPlayer === 'O') {
+                    gameBoard.style.pointerEvents = 'none';
+                    setTimeout(handleAIMove, 500);
+                }
+            }
+            
+            function handleCellPlayed(clickedCell, clickedCellIndex) {
+                gameState[clickedCellIndex] = currentPlayer;
+                clickedCell.innerHTML = currentPlayer;
+                clickedCell.classList.add(currentPlayer.toLowerCase());
+            }
+
+            function handleResultValidation() {
+                let roundWon = false;
+                let winningLine = [];
+
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const winCondition = winningConditions[i];
+                    let a = gameState[winCondition[0]];
+                    let b = gameState[winCondition[1]];
+                    let c = gameState[winCondition[2]];
+                    if (a === '' || b === '' || c === '') continue;
+                    if (a === b && b === c) {
+                        roundWon = true;
+                        winningLine = winCondition;
+                        break;
+                    }
+                }
+
+                if (roundWon) {
+                    statusDisplay.innerHTML = winningMessage();
+                    statusDisplay.className = currentPlayer === 'X' ? 'status-x' : 'status-o';
+                    scores[currentPlayer.toLowerCase()]++;
+                    gameActive = false;
+                    winningLine.forEach(index => cells[index].classList.add('win'));
+                    updateScoreboard();
+                    return;
+                }
+
+                let roundDraw = !gameState.includes("");
+                if (roundDraw) {
+                    statusDisplay.innerHTML = drawMessage();
+                    statusDisplay.className = 'status-draw';
+                    scores.draw++;
+                    gameActive = false;
+                    updateScoreboard();
+                    return;
+                }
+
+                handlePlayerChange();
+            }
+
+            function handlePlayerChange() {
+                currentPlayer = currentPlayer === "X" ? "O" : "X";
+                statusDisplay.innerHTML = currentPlayerTurn();
+                statusDisplay.className = currentPlayer === 'X' ? 'status-x' : 'status-o';
+            }
+
+            function updateScoreboard() {
+                xScoreDisplay.innerText = scores.x;
+                oScoreDisplay.innerText = scores.o;
+                drawScoreDisplay.innerText = scores.draw;
+            }
+
+            function handleAIMove() {
+                let bestMove = findBestMove();
+                if (bestMove !== -1) {
+                    const cell = cells[bestMove];
+                    handleCellPlayed(cell, bestMove);
+                    handleResultValidation();
+                }
+                gameBoard.style.pointerEvents = 'auto';
+            }
+            
+            function findBestMove() {
+                for (let i = 0; i < gameState.length; i++) {
+                    if (gameState[i] === "") {
+                        gameState[i] = 'O';
+                        if (checkWinner('O')) {
+                            gameState[i] = "";
+                            return i;
+                        }
+                        gameState[i] = "";
+                    }
+                }
+                
+                for (let i = 0; i < gameState.length; i++) {
+                    if (gameState[i] === "") {
+                        gameState[i] = 'X';
+                        if (checkWinner('X')) {
+                            gameState[i] = "";
+                            return i;
+                        }
+                        gameState[i] = "";
+                    }
+                }
+
+                if (gameState[4] === "") return 4;
+
+                const corners = [0, 2, 6, 8];
+                const availableCorners = corners.filter(i => gameState[i] === "");
+                if (availableCorners.length > 0) {
+                    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                }
+
+                const availableCells = [];
+                gameState.forEach((cell, index) => {
+                    if (cell === "") availableCells.push(index);
+                });
+                return availableCells[Math.floor(Math.random() * availableCells.length)];
+            }
+
+            function checkWinner(player) {
+                for (let i = 0; i < winningConditions.length; i++) {
+                    const [a, b, c] = winningConditions[i];
+                    if (gameState[a] === player && gameState[b] === player && gameState[c] === player) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+            restartBtn.addEventListener('click', startNewRound);
+            pvpModeBtn.addEventListener('click', () => setGameMode('pvp'));
+            pvaModeBtn.addEventListener('click', () => setGameMode('pva'));
+
+            statusDisplay.innerHTML = currentPlayerTurn();
+        });
+    </script>
+</body>
+</html>
